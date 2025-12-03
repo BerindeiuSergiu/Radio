@@ -20,6 +20,7 @@ network RadioSch
         int usersCount;
 //= default(3);
 
+        @display("bgb=660,329");
     submodules:
         scheduler: Scheduler {
             gateSize = parent.usersCount;

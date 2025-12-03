@@ -44,6 +44,7 @@ void MyQ::handleMessage(cMessage *msg)
 {
     if (msg->arrivedOn("rxPackets")) {
             queue.insert(msg);
+            EV << "[Queue] Packet arrived, queue length now: " << queue.getLength() << "\n";
         }
         else if (msg->arrivedOn("rxScheduling")) {
             int nrOfBlocks = 1;// setup def
@@ -53,13 +54,22 @@ void MyQ::handleMessage(cMessage *msg)
                 nrOfBlocks = (int) msg->par("nrOfBlocks");
             }
 
+            int queueLengthBefore = queue.getLength();
+            EV << "[Queue] Scheduling command received: " << nrOfBlocks 
+               << " blocks allowed, queue length: " << queueLengthBefore << "\n";
+
             delete msg;
 
             // se scoate maxim nrOfBlocks din coada
+            int packetsSent = 0;
             for (int j = 0; j < nrOfBlocks && !queue.isEmpty(); ++j) {
                 cMessage *pkt = (cMessage *)queue.pop();
                 send(pkt, "txPackets");
+                packetsSent++;
             }
+            
+            EV << "[Queue] Sent " << packetsSent << " packets, " 
+               << queue.getLength() << " remaining in queue\n";
         }
         else {
             // fallback default

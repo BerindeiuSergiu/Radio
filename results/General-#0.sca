@@ -1,8 +1,8 @@
 version 3
-run General-0-20251202-23:36:06-5436
+run General-0-20251203-22:00:47-12384
 attr configname General
-attr datetime 20251202-23:36:06
-attr datetimef 20251202-233606
+attr datetime 20251203-22:00:47
+attr datetimef 20251203-220047
 attr experiment General
 attr inifile omnetpp.ini
 attr iterationvars ""
@@ -10,7 +10,7 @@ attr iterationvarsd ""
 attr iterationvarsf ""
 attr measurement ""
 attr network RadioSch
-attr processid 5436
+attr processid 12384
 attr repetition 0
 attr replication #0
 attr resultdir results
@@ -18,28 +18,75 @@ attr runnumber 0
 attr seedset 0
 config network RadioSch
 config RadioSch.usersCount 3
-config **.generator.sendIaTime 10ms
-config **.scheduler.schedulingPeriod 5ms
+config **.generator.sendIaTime 2ms
+config **.scheduler.schedulingPeriod 20ms
 config sim-time-limit 1s
 
 par RadioSch.scheduler typename "\"Scheduler\""
-par RadioSch.scheduler schedulingPeriod 5ms
+par RadioSch.scheduler schedulingPeriod 20ms
 attr unit ms
 par RadioSch.scheduler gateSize 3
 par RadioSch.sink typename "\"Sink\""
 par RadioSch.sink gateSize 3
 par RadioSch.user[0].generator typename "\"Source\""
-par RadioSch.user[0].generator sendIaTime 10ms
+par RadioSch.user[0].generator sendIaTime 2ms
 attr unit ms
 par RadioSch.user[0].myqq typename "\"MyQ\""
 par RadioSch.user[0] typename "\"User\""
 par RadioSch.user[1].generator typename "\"Source\""
-par RadioSch.user[1].generator sendIaTime 10ms
+par RadioSch.user[1].generator sendIaTime 2ms
 attr unit ms
 par RadioSch.user[1].myqq typename "\"MyQ\""
 par RadioSch.user[1] typename "\"User\""
 par RadioSch.user[2].generator typename "\"Source\""
-par RadioSch.user[2].generator sendIaTime 10ms
+par RadioSch.user[2].generator sendIaTime 2ms
+attr unit ms
+par RadioSch.user[2].myqq typename "\"MyQ\""
+par RadioSch.user[2] typename "\"User\""
+par RadioSch typename "\"RadioSch\""
+par RadioSch usersCount 3
+
+run General-0-20251203-22:53:13-23848
+attr configname General
+attr datetime 20251203-22:53:13
+attr datetimef 20251203-225313
+attr experiment General
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network RadioSch
+attr processid 23848
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config network RadioSch
+config RadioSch.usersCount 3
+config **.generator.sendIaTime 2ms
+config **.scheduler.schedulingPeriod 20ms
+config sim-time-limit 1s
+
+par RadioSch.scheduler typename "\"Scheduler\""
+par RadioSch.scheduler schedulingPeriod 20ms
+attr unit ms
+par RadioSch.scheduler gateSize 3
+par RadioSch.sink typename "\"Sink\""
+par RadioSch.sink gateSize 3
+par RadioSch.user[0].generator typename "\"Source\""
+par RadioSch.user[0].generator sendIaTime 2ms
+attr unit ms
+par RadioSch.user[0].myqq typename "\"MyQ\""
+par RadioSch.user[0] typename "\"User\""
+par RadioSch.user[1].generator typename "\"Source\""
+par RadioSch.user[1].generator sendIaTime 2ms
+attr unit ms
+par RadioSch.user[1].myqq typename "\"MyQ\""
+par RadioSch.user[1] typename "\"User\""
+par RadioSch.user[2].generator typename "\"Source\""
+par RadioSch.user[2].generator sendIaTime 2ms
 attr unit ms
 par RadioSch.user[2].myqq typename "\"MyQ\""
 par RadioSch.user[2] typename "\"User\""

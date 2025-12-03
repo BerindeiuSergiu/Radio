@@ -33,7 +33,7 @@ Scheduler::~Scheduler()
 void Scheduler::initialize()
 {
     NrUsers = par("gateSize").intValue();
-    NrOfChannels = 10;//read from omnetpp.ini
+    NrOfChannels = 10;//read from omnetpp.ini can be removed
 
     currentUser = 0;
     selfMsg = new cMessage("selfMsg");
@@ -64,14 +64,21 @@ void Scheduler::handleMessage(cMessage *msg)
 
         cMessage *cmd = new cMessage("cmd");
         // nr. de pachete pe care are voie sa le trimita din coada userIndex (adica user-ul curent)
-        cmd->addPar("nrOfBlocks") = 3;
+        cmd->addPar("nrOfBlocks") = 1;
+
+        EV << "[Scheduler] t=" << simTime() << "s - Scheduling User[" << userIndex 
+           << "] with " << cmd->par("nrOfBlocks").longValue() << " blocks\n";
 
         // comanda merge doar la userIndex
         send(cmd, "txScheduling", userIndex);
 
         //se calculeaza urmatorul user pentru runda viitoare
         currentUser = (currentUser + 1) % NrUsers;
-        scheduleAt(simTime() + par("schedulingPeriod").doubleValue(), selfMsg);
+        
+        double periodInSeconds = par("schedulingPeriod").doubleValue() / 1000.0;
+        simtime_t nextScheduling = simTime() + periodInSeconds;
+        EV << "[Scheduler] Next scheduling at t=" << nextScheduling << "s\n";
+        scheduleAt(nextScheduling, selfMsg);
     }
     else {
         delete msg;

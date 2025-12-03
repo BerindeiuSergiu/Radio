@@ -39,10 +39,10 @@ void Source::handleMessage(cMessage *msg)
 
     cMessage *job = new cMessage("job");
     send(job, "txPackets");
-    double sendingTime;
-    sendingTime = par("sendIaTime").doubleValue();
-    //scheduleAt(simTime()+ exponential(sendingTime));
-    scheduleAt(simTime()+ exponential(sendingTime), sendMessageEvent);
+    
+    // Convert milliseconds to seconds properly
+    double sendingTime = par("sendIaTime").doubleValue() / 1000.0; // se transmite in secunde dintr-un motiv sau altul asa ca il transform in ms
+    scheduleAt(simTime() + exponential(sendingTime), sendMessageEvent);
 
     //scheduleAt(simTime()+par("sendIaTime").doubleValue(), sendMessageEvent);
 }
