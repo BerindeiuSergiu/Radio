@@ -33,5 +33,6 @@ network RadioSch
         for i=0..usersCount - 1 {
             scheduler.txScheduling[i] --> user[i].rxScheduling;
             user[i].txPackets --> sink.rxPackets[i];
+            user[i].txStatus --> scheduler.rxStatus[i];
         }
 }

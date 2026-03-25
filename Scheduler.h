@@ -17,11 +17,12 @@
 #define __SCHED_TST_SCHEDULER_H_
 
 #include <omnetpp.h>
+#include <vector>
 
 using namespace omnetpp;
 
 /**
- * TODO - Generated class
+ * p[i] = (tnow - t_last_served[i]) * W[i]         (WRR)
  */
 class Scheduler : public cSimpleModule
 {
@@ -31,9 +32,26 @@ public:
 private:
     cMessage *selfMsg;
     int NrUsers;
-    int NrOfChannels;
-   // int userWeights[3];
-    int currentUser; // used in round robin
+    int B = 0;
+
+
+    static const int KIND_QREQ = 1001; // request queue length
+    static const int KIND_QRSP = 1002; // response with queue length
+
+    // for queue length collection
+    bool collecting = false;
+    int pending = 0;
+
+    // course parameters/state
+    std::vector<int> weights;          // W[i]
+    std::vector<int> qlen;             // queue lengths collected at start of Tc
+    std::vector<simtime_t> lastServed; // t_last_served[i]
+
+    int rrTiePtr = 0; // tie-break pointer to keep it fair when p[i] ties
+
+    void startCollection();
+    void finalizeAndSchedule();
+
 
   protected:
     virtual void initialize();

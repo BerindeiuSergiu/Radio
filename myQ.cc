@@ -17,6 +17,9 @@
 
 Define_Module(MyQ);
 
+static const int KIND_QREQ = 1001;
+static const int KIND_QRSP = 1002;
+
 void MyQ::initialize()
 {
     queue.setName("queue");
@@ -40,40 +43,76 @@ void MyQ::initialize()
 //    }
 //}
 
+//void MyQ::handleMessage(cMessage *msg)
+//{
+//    if (msg->arrivedOn("rxPackets")) {
+//            queue.insert(msg);
+//            EV << "[Queue] Packet arrived, queue length now: " << queue.getLength() << "\n";
+//        }
+//        else if (msg->arrivedOn("rxScheduling")) {
+//            int nrOfBlocks = 1;// setup def
+//
+//            //read parameters from msg
+//            if (msg->hasPar("nrOfBlocks")) {
+//                nrOfBlocks = (int) msg->par("nrOfBlocks");
+//            }
+//
+//            int queueLengthBefore = queue.getLength();
+//            EV << "[Queue] Scheduling command received: " << nrOfBlocks
+//               << " blocks allowed, queue length: " << queueLengthBefore << "\n";
+//
+//            delete msg;
+//
+//            // se scoate maxim nrOfBlocks din coada
+//            int packetsSent = 0;
+//            for (int j = 0; j < nrOfBlocks && !queue.isEmpty(); ++j) {
+//                cMessage *pkt = (cMessage *)queue.pop();
+//                send(pkt, "txPackets");
+//                packetsSent++;
+//            }
+//
+//            EV << "[Queue] Sent " << packetsSent << " packets, "
+//               << queue.getLength() << " remaining in queue\n";
+//        }
+//        else {
+//            // fallback default
+//            delete msg;
+//        }
+//}
+
 void MyQ::handleMessage(cMessage *msg)
 {
     if (msg->arrivedOn("rxPackets")) {
-            queue.insert(msg);
-            EV << "[Queue] Packet arrived, queue length now: " << queue.getLength() << "\n";
-        }
-        else if (msg->arrivedOn("rxScheduling")) {
-            int nrOfBlocks = 1;// setup def
+        queue.insert(msg);
+        return;
+    }
 
-            //read parameters from msg
-            if (msg->hasPar("nrOfBlocks")) {
-                nrOfBlocks = (int) msg->par("nrOfBlocks");
-            }
+    if (msg->arrivedOn("rxScheduling")) {
 
-            int queueLengthBefore = queue.getLength();
-            EV << "[Queue] Scheduling command received: " << nrOfBlocks 
-               << " blocks allowed, queue length: " << queueLengthBefore << "\n";
-
+        // 1) Scheduler asks for queue length
+        if (msg->getKind() == KIND_QREQ) {
+            cMessage *rsp = new cMessage("qlenRsp");
+            rsp->setKind(KIND_QRSP);
+            rsp->addPar("qlen") = queue.getLength();
+            send(rsp, "txStatus");
             delete msg;
+            return;
+        }
 
-            // se scoate maxim nrOfBlocks din coada
-            int packetsSent = 0;
-            for (int j = 0; j < nrOfBlocks && !queue.isEmpty(); ++j) {
-                cMessage *pkt = (cMessage *)queue.pop();
-                send(pkt, "txPackets");
-                packetsSent++;
-            }
-            
-            EV << "[Queue] Sent " << packetsSent << " packets, " 
-               << queue.getLength() << " remaining in queue\n";
+        // 2) Scheduler grants nrOfBlocks to be transmitted
+        int nrOfBlocks = 0;
+        if (msg->hasPar("nrOfBlocks"))
+            nrOfBlocks = (int)msg->par("nrOfBlocks");
+
+        delete msg;
+
+        for (int j = 0; j < nrOfBlocks && !queue.isEmpty(); ++j) {
+            cMessage *pkt = (cMessage *)queue.pop();
+            send(pkt, "txPackets");
         }
-        else {
-            // fallback default
-            delete msg;
-        }
+        return;
+    }
+
+    delete msg;
 }
 

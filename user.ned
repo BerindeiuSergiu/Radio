@@ -33,5 +33,6 @@ module User
         rxScheduling --> myqq.rxScheduling;
         generator.txPackets --> myqq.rxPackets;
         myqq.txPackets --> txPackets;
+        myqq.txStatus --> txStatus;
 
 }

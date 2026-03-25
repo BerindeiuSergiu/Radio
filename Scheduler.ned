@@ -25,7 +25,10 @@ simple Scheduler
         //volatile
         double schedulingPeriod @unit(ms) = default(1ms);
         int gateSize;//me, dt
+        int B = default(8);                 // number of radio channels (resource blocks) per Tc
+        int weights[gateSize] = default(1); // WRR weights (RR if all 1)
 
     gates:
         output txScheduling[gateSize];
+        input  rxStatus[gateSize];
 }

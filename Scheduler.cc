@@ -14,6 +14,7 @@
 // 
 
 #include "Scheduler.h"
+#include <string>
 
 Define_Module(Scheduler);
 
@@ -32,12 +33,94 @@ Scheduler::~Scheduler()
 
 void Scheduler::initialize()
 {
-    NrUsers = par("gateSize").intValue();
-    NrOfChannels = 10;//read from omnetpp.ini can be removed
+       NrUsers = par("gateSize").intValue();
+       B = par("B").intValue();
+       if (B < 0) B = 0;
 
-    currentUser = 0;
-    selfMsg = new cMessage("selfMsg");
-    scheduleAt(simTime(), selfMsg);
+       weights.assign(NrUsers, 1);
+       qlen.assign(NrUsers, 0);
+       lastServed.assign(NrUsers, SIMTIME_ZERO);
+
+       const char* wightsStr = par("weights").stringValue();
+
+       cStringTokenizer tokenizer(wightsStr, ",");
+       std::vector<std::string> tokens = tokenizer.asVector();
+
+       for (int i = 0; i < NrUsers && i < (int)tokens.size(); i++) {
+           int w = std::stoi(tokens[i]);
+           weights[i] = (w > 0) ? w : 1;
+       }
+
+       rrTiePtr = 0;
+
+       selfMsg = new cMessage("tick");
+       scheduleAt(simTime(), selfMsg);
+}
+
+
+void Scheduler::startCollection()
+{
+    collecting = true;
+    pending = NrUsers;
+
+    for (int i = 0; i < NrUsers; i++) {
+        cMessage *req = new cMessage("qlenReq");
+        req->setKind(KIND_QREQ);
+        send(req, "txScheduling", i);
+    }
+}
+
+void Scheduler::finalizeAndSchedule()
+{
+    collecting = false;
+    std::vector<int> grant(NrUsers, 0);
+
+    auto anyBacklog = [&]() -> bool {
+        for (int i = 0; i < NrUsers; i++)
+            if (qlen[i] > 0) return true;
+        return false;
+    };
+
+    int remaining = B;
+    while (remaining > 0 && anyBacklog()) {
+        int best = -1;
+        double bestP = -1.0;
+
+        // tie-break: scan users starting at rrTiePtr
+        for (int k = 0; k < NrUsers; k++) {
+            int i = (rrTiePtr + k) % NrUsers;
+            if (qlen[i] <= 0) continue;
+
+            // p[i] = (tnow - lastServed[i]) * W[i]
+            // RR is obtained when all W[i] = 1.
+            simtime_t dt = simTime() - lastServed[i];
+            double p = dt.dbl() * (double)weights[i];
+
+            if (p > bestP) {
+                bestP = p;
+                best = i;
+            }
+        }
+
+        if (best < 0) break;
+
+        grant[best] += 1;
+        qlen[best] -= 1;
+        lastServed[best] = simTime();
+        rrTiePtr = (best + 1) % NrUsers;
+        remaining--;
+    }
+
+    // this is used to send nr of blocks to each user
+    for (int i = 0; i < NrUsers; i++) {
+        cMessage *cmd = new cMessage("grant");
+        cmd->addPar("nrOfBlocks") = grant[i];
+        send(cmd, "txScheduling", i);
+    }
+
+    // continue in the next cycle
+    simtime_t Tc = par("schedulingPeriod");
+    scheduleAt(simTime() + Tc, selfMsg);
 }
 
 //void Scheduler::handleMessage(cMessage *msg)
@@ -59,28 +142,28 @@ void Scheduler::initialize()
 
 void Scheduler::handleMessage(cMessage *msg)
 {
-    if (msg == selfMsg) {
-        int userIndex = currentUser; //doar un user/runda
+    // Start of scheduling cycle
+       if (msg == selfMsg) {
+           startCollection();
+           return;
+       }
 
-        cMessage *cmd = new cMessage("cmd");
-        // nr. de pachete pe care are voie sa le trimita din coada userIndex (adica user-ul curent)
-        cmd->addPar("nrOfBlocks") = 1;
+       // Queue length responses from users
+       if (msg->getKind() == KIND_QRSP && collecting) {
+           int userId = msg->getArrivalGate()->getIndex();
+           if (msg->hasPar("qlen"))
+               qlen[userId] = (int)msg->par("qlen");
+           else
+               qlen[userId] = 0;
 
-        EV << "[Scheduler] t=" << simTime() << "s - Scheduling User[" << userIndex 
-           << "] with " << cmd->par("nrOfBlocks").longValue() << " blocks\n";
+           delete msg;
+           pending--;
 
-        // comanda merge doar la userIndex
-        send(cmd, "txScheduling", userIndex);
+           if (pending == 0) {
+               finalizeAndSchedule();
+           }
+           return;
+       }
 
-        //se calculeaza urmatorul user pentru runda viitoare
-        currentUser = (currentUser + 1) % NrUsers;
-        
-        double periodInSeconds = par("schedulingPeriod").doubleValue() / 1000.0;
-        simtime_t nextScheduling = simTime() + periodInSeconds;
-        EV << "[Scheduler] Next scheduling at t=" << nextScheduling << "s\n";
-        scheduleAt(nextScheduling, selfMsg);
-    }
-    else {
-        delete msg;
-    }
+       delete msg;
 }

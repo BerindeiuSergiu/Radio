@@ -19,8 +19,9 @@
 
 simple MyQ
 {
-      gates:
+    gates:
         input rxScheduling;
         input rxPackets;
         output txPackets;
+        output txStatus; // sent length back to Schl
 }
