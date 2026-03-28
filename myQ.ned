@@ -23,5 +23,6 @@ simple MyQ
         input rxScheduling;
         input rxPackets;
         output txPackets;
-        output txStatus; // sent length back to Schl
+        // output txStatus; // sent length back to Schl
+        output txInfo;
 }

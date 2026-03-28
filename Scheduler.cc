@@ -15,6 +15,7 @@
 
 #include "Scheduler.h"
 #include <string>
+#include <algorithm> // for std::min
 
 Define_Module(Scheduler);
 
@@ -28,33 +29,60 @@ Scheduler::Scheduler()
 Scheduler::~Scheduler()
 {
     cancelAndDelete(selfMsg);
+    if (csvFile.is_open()) {
+        csvFile.close();
+    }
 }
 
 
 void Scheduler::initialize()
 {
-       NrUsers = par("gateSize").intValue();
-       B = par("B").intValue();
-       if (B < 0) B = 0;
+    NrOfHighPriorityUsers = par("NrOfHighPriorityUsers").intValue();
+    NrOfMediumPriorityUsers = par("NrOfMediumPriorityUsers").intValue();
+    NrOfLowPriorityUsers = par("NrOfLowPriorityUsers").intValue();
 
-       weights.assign(NrUsers, 1);
-       qlen.assign(NrUsers, 0);
-       lastServed.assign(NrUsers, SIMTIME_ZERO);
+    NrUsers = par("gateSize").intValue();
+    NrOfChannels = par("NrOfChannels").intValue();
+    schedulingPeriod = par("schedulingPeriod").doubleValue();
+    HighPriorityWeight = par("HighPriorityWeight").intValue();
+    MediumPriorityWeight = par("MediumPriorityWeight").intValue();
+    LowPriorityWeight = par("LowPriorityWeight").intValue();
 
-       const char* wightsStr = par("weights").stringValue();
+    for (int i = 0; i < NrOfHighPriorityUsers; i++) {
+        prio[i] = 0;
+        userWeights[i] = HighPriorityWeight;
+    }
 
-       cStringTokenizer tokenizer(wightsStr, ",");
-       std::vector<std::string> tokens = tokenizer.asVector();
+    for (int i = 0; i < NrOfMediumPriorityUsers; i++) {
+        prio[NrOfHighPriorityUsers + i] = 1;
+        userWeights[NrOfHighPriorityUsers + i] = MediumPriorityWeight;
+    }
 
-       for (int i = 0; i < NrUsers && i < (int)tokens.size(); i++) {
-           int w = std::stoi(tokens[i]);
-           weights[i] = (w > 0) ? w : 1;
-       }
+    for (int i = 0; i < NrOfLowPriorityUsers; i++) {
+        prio[NrOfHighPriorityUsers + NrOfMediumPriorityUsers + i] = 2;
+        userWeights[NrOfHighPriorityUsers + NrOfMediumPriorityUsers + i] = LowPriorityWeight;
+    }
 
-       rrTiePtr = 0;
+    for (int i = 0; i < 10; i++) {
+        q[i] = 0;
+        NrBlocks[i] = 0;
+        last_time_served[i] = simTime();
+    }
 
-       selfMsg = new cMessage("tick");
-       scheduleAt(simTime(), selfMsg);
+    selfMsg = new cMessage("selfMsg");
+    scheduleAt(simTime(), selfMsg);
+
+    // Initialize output vectors (like professor's FLC version)
+    delayHighPriority.setName("high priority mean delay");
+    delayMediumPriority.setName("medium priority mean delay");
+    delayLowPriority.setName("low priority mean delay");
+    weightVector.setName("weight vector");
+
+    // Open CSV file for recording data
+    csvFile.open("results/scheduler_data.csv", std::ios::app);  // append mode
+    if (csvFile.is_open()) {
+        csvFile << "time,weight\n";  // CSV header
+    }
 }
 
 
@@ -118,6 +146,17 @@ void Scheduler::finalizeAndSchedule()
         send(cmd, "txScheduling", i);
     }
 
+    // Record weight vectors (like professor's FLC version)
+    if (NrOfHighPriorityUsers > 0) {
+        weightVector.record(userWeights[0]);  // Record first high priority user weight
+        
+        // Also write to CSV
+        if (csvFile.is_open()) {
+            csvFile << simTime().dbl() << "," << userWeights[0] << "\n";
+            csvFile.flush();
+        }
+    }
+
     // continue in the next cycle
     simtime_t Tc = par("schedulingPeriod");
     scheduleAt(simTime() + Tc, selfMsg);
@@ -142,28 +181,101 @@ void Scheduler::finalizeAndSchedule()
 
 void Scheduler::handleMessage(cMessage *msg)
 {
-    // Start of scheduling cycle
-       if (msg == selfMsg) {
-           startCollection();
-           return;
-       }
+    for (int i = 0; i < NrOfHighPriorityUsers; i++) {
+        userWeights[i] = par("HighPriorityWeight").intValue();
+    }
 
-       // Queue length responses from users
-       if (msg->getKind() == KIND_QRSP && collecting) {
-           int userId = msg->getArrivalGate()->getIndex();
-           if (msg->hasPar("qlen"))
-               qlen[userId] = (int)msg->par("qlen");
-           else
-               qlen[userId] = 0;
+    for (int i = 0; i < NrOfMediumPriorityUsers; i++) {
+        userWeights[NrOfHighPriorityUsers + i] = par("MediumPriorityWeight").intValue();
+    }
 
-           delete msg;
-           pending--;
+    for (int i = 0; i < NrOfLowPriorityUsers; i++) {
+        userWeights[NrOfHighPriorityUsers + NrOfMediumPriorityUsers + i] = par("LowPriorityWeight").intValue();
+    }
 
-           if (pending == 0) {
-               finalizeAndSchedule();
-           }
-           return;
-       }
+    if (msg == selfMsg) {
+        proportionalFair();
+        scheduleAt(simTime() + schedulingPeriod, selfMsg);
+        return;
+    }
 
-       delete msg;
+    for (int i = 0; i < NrUsers; i++) {
+        if (msg->arrivedOn("rxInfo", i)) {
+            q[i] = msg->par("ql_info");
+            EV << "[Scheduler] rxInfo user " << i << " q=" << q[i] << "\n";
+            delete msg;
+            return;
+        }
+    }
+
+    if (msg->arrivedOn("rxFLC")) {
+        if (msg->hasPar("newW")) {
+            HighPriorityWeight = (int)msg->par("newW");
+        }
+        else if (msg->hasPar("deltaW")) {
+            HighPriorityWeight += (int)msg->par("deltaW");
+        }
+        if (HighPriorityWeight < 1) HighPriorityWeight = 1;
+        if (HighPriorityWeight > 100) HighPriorityWeight = 100;
+        par("HighPriorityWeight").setIntValue(HighPriorityWeight);
+        EV << "[Scheduler] Applied FLC HPWeight=" << HighPriorityWeight << "\n";
+        delete msg;
+        return;
+    }
+
+    delete msg;
 }
+
+void Scheduler::proportionalFair()
+{
+    EV << "[proportionalFair] Called at time " << simTime() << "\n";
+    int allocatedBlocks[10];
+    for (int i = 0; i < NrUsers; i++) {
+        allocatedBlocks[i] = 0;
+    }
+
+    for (int c = 0; c < NrOfChannels; c++) {
+        for (int j = 0; j < NrUsers; j++) {
+            r[j] = uniform(0.1, 10);
+            p[j] = r[j] * ((simTime() - last_time_served[j]).dbl()) * userWeights[j];
+        }
+
+        int servedUser = -1;
+        double maxScore = 0;
+
+        for (int j = 0; j < NrUsers; j++) {
+            if ((q[j] - allocatedBlocks[j]) < 1) continue;
+            if (allocatedBlocks[j] >= userWeights[j]) continue;
+            if (p[j] > maxScore) {
+                maxScore = p[j];
+                servedUser = j;
+            }
+        }
+
+        if (servedUser != -1) {
+            allocatedBlocks[servedUser]++;
+        }
+    }
+
+    for (int i = 0; i < NrUsers; i++) {
+        if (allocatedBlocks[i] > 0) {
+            int grant = std::min(allocatedBlocks[i], q[i]);
+            q[i] -= grant;
+            last_time_served[i] = simTime();
+
+            cMessage *cmd = new cMessage("cmd");
+            cmd->addPar("nrBlocks").setLongValue(grant);
+            cmd->addPar("priorityType").setLongValue(prio[i]);
+            EV << "[Scheduler] send grant=" << grant << " user=" << i << " prio=" << prio[i] << "\n";
+            send(cmd, "txScheduling", i);
+        }
+    }
+
+    // Record weight vector data to CSV (record FLC adjustments)
+    if (NrOfHighPriorityUsers > 0 && csvFile.is_open()) {
+        csvFile << simTime().dbl() << "," << userWeights[0] << "\n";
+        csvFile.flush();
+        EV << "[CSV] Recorded weight=" << userWeights[0] << " at time=" << simTime() << "\n";
+    }
+}
+

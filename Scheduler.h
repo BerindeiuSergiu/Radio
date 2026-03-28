@@ -18,6 +18,7 @@
 
 #include <omnetpp.h>
 #include <vector>
+#include <fstream>
 
 using namespace omnetpp;
 
@@ -32,30 +33,54 @@ public:
 private:
     cMessage *selfMsg;
     int NrUsers;
+    int NrOfChannels;
+
+    // Legacy fields retained for old methods (not used in new proportionalFair path)
     int B = 0;
-
-
-    static const int KIND_QREQ = 1001; // request queue length
-    static const int KIND_QRSP = 1002; // response with queue length
-
-    // for queue length collection
+    static const int KIND_QREQ = 1001;
+    static const int KIND_QRSP = 1002;
     bool collecting = false;
     int pending = 0;
+    std::vector<int> weights;
+    std::vector<int> qlen;
+    std::vector<simtime_t> lastServed;
+    int rrTiePtr = 0;
 
-    // course parameters/state
-    std::vector<int> weights;          // W[i]
-    std::vector<int> qlen;             // queue lengths collected at start of Tc
-    std::vector<simtime_t> lastServed; // t_last_served[i]
+    int NrOfHighPriorityUsers;
+    int NrOfMediumPriorityUsers;
+    int NrOfLowPriorityUsers;
 
-    int rrTiePtr = 0; // tie-break pointer to keep it fair when p[i] ties
+    int HighPriorityWeight;
+    int MediumPriorityWeight;
+    int LowPriorityWeight;
 
-    void startCollection();
-    void finalizeAndSchedule();
+    int userWeights[10];
+    int q[10];
+    double p[10];
+    double r[10];
+    int prio[10];
+    int NrBlocks[10];
+    simtime_t last_time_served[10];
 
+    double schedulingPeriod;
+
+    // Output vectors for data recording (like professor's version)
+    cOutVector delayHighPriority;
+    cOutVector delayMediumPriority;
+    cOutVector delayLowPriority;
+    cOutVector weightVector;
+
+    // CSV file for manual recording
+    std::ofstream csvFile;
 
   protected:
-    virtual void initialize();
-    virtual void handleMessage(cMessage *msg);
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
+
+    //for proportional fair
+    virtual void proportionalFair();
+    void finalizeAndSchedule();
+    void startCollection();
 };
 
 #endif

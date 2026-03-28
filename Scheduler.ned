@@ -21,14 +21,19 @@
 simple Scheduler
 {
       parameters:
-        //@display("i=block/dispatch");
-        //volatile
-        double schedulingPeriod @unit(ms) = default(1ms);
+        @display("i=block/dispatch");
+        double schedulingPeriod @unit(ms);
         int gateSize;//me, dt
-        int B = default(8);                 // number of radio channels (resource blocks) per Tc
-        int weights[gateSize] = default(1); // WRR weights (RR if all 1)
+        int NrOfChannels;
+        int NrOfHighPriorityUsers;
+        int NrOfMediumPriorityUsers;
+        int NrOfLowPriorityUsers;
+        int HighPriorityWeight @mutable;
+        int MediumPriorityWeight;
+        int LowPriorityWeight;
 
     gates:
         output txScheduling[gateSize];
-        input  rxStatus[gateSize];
+        input rxInfo[gateSize];
+        input rxFLC;
 }

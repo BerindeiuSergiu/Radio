@@ -22,17 +22,16 @@ module User
 
     gates:
         output txPackets;
+        output txInfo;            // ADDED: report queue length to scheduler
         input rxScheduling;
 
     submodules:
         generator: Source;
-
         myqq: MyQ;
 
     connections:
         rxScheduling --> myqq.rxScheduling;
         generator.txPackets --> myqq.rxPackets;
         myqq.txPackets --> txPackets;
-        myqq.txStatus --> txStatus;
-
+        myqq.txInfo --> txInfo;   // ADDED: forward info from queue
 }

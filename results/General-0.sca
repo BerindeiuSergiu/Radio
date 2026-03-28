@@ -1,0 +1,153 @@
+version 3
+run General-0-20260328-20:13:47-2872
+attr configname General
+attr datetime 20260328-20:13:47
+attr datetimef 20260328-201347
+attr experiment General
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network RadioSch
+attr processid 2872
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config network RadioSch
+config record-eventlog true
+config result-dir results
+config output-vector-file results/General-0.vec
+config output-scalar-file results/General-0.sca
+config **.vector-recording true
+config **.scalar-recording true
+config RadioSch.usersCount 10
+config *.scheduler.NrOfHighPriorityUsers 2
+config *.scheduler.NrOfMediumPriorityUsers 5
+config *.scheduler.NrOfLowPriorityUsers 3
+config *.scheduler.NrOfChannels 30
+config *.scheduler.HighPriorityWeight 4
+config *.scheduler.MediumPriorityWeight 2
+config *.scheduler.LowPriorityWeight 1
+config *.delayLimit 1
+config *.flc.config "xmldoc(\"conf2.xml\")"
+config **.generator.sendIaTime 0.37ms
+config **.generator.nrPackets 1
+config **.generator.MAX_SIM 500s
+config *.scheduler.schedulingPeriod 1ms
+config sim-time-limit 500s
+
+par RadioSch.scheduler typename "\"Scheduler\""
+par RadioSch.scheduler schedulingPeriod 1ms
+attr unit ms
+par RadioSch.scheduler gateSize 10
+par RadioSch.scheduler NrOfChannels 10
+par RadioSch.scheduler NrOfHighPriorityUsers 2
+par RadioSch.scheduler NrOfMediumPriorityUsers 5
+par RadioSch.scheduler NrOfLowPriorityUsers 3
+par RadioSch.scheduler HighPriorityWeight 30
+attr mutable ""
+par RadioSch.scheduler MediumPriorityWeight 2
+par RadioSch.scheduler LowPriorityWeight 1
+par RadioSch.sink typename "\"Sink\""
+par RadioSch.sink gateSize 10
+par RadioSch.sink meanDelayHP 0.381236
+attr mutable ""
+par RadioSch.user[0].generator typename "\"Source\""
+par RadioSch.user[0].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[0].generator nrPackets 1
+par RadioSch.user[0].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[0].myqq typename "\"MyQ\""
+par RadioSch.user[0] typename "\"User\""
+par RadioSch.user[1].generator typename "\"Source\""
+par RadioSch.user[1].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[1].generator nrPackets 1
+par RadioSch.user[1].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[1].myqq typename "\"MyQ\""
+par RadioSch.user[1] typename "\"User\""
+par RadioSch.user[2].generator typename "\"Source\""
+par RadioSch.user[2].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[2].generator nrPackets 1
+par RadioSch.user[2].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[2].myqq typename "\"MyQ\""
+par RadioSch.user[2] typename "\"User\""
+par RadioSch.user[3].generator typename "\"Source\""
+par RadioSch.user[3].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[3].generator nrPackets 1
+par RadioSch.user[3].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[3].myqq typename "\"MyQ\""
+par RadioSch.user[3] typename "\"User\""
+par RadioSch.user[4].generator typename "\"Source\""
+par RadioSch.user[4].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[4].generator nrPackets 1
+par RadioSch.user[4].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[4].myqq typename "\"MyQ\""
+par RadioSch.user[4] typename "\"User\""
+par RadioSch.user[5].generator typename "\"Source\""
+par RadioSch.user[5].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[5].generator nrPackets 1
+par RadioSch.user[5].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[5].myqq typename "\"MyQ\""
+par RadioSch.user[5] typename "\"User\""
+par RadioSch.user[6].generator typename "\"Source\""
+par RadioSch.user[6].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[6].generator nrPackets 1
+par RadioSch.user[6].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[6].myqq typename "\"MyQ\""
+par RadioSch.user[6] typename "\"User\""
+par RadioSch.user[7].generator typename "\"Source\""
+par RadioSch.user[7].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[7].generator nrPackets 1
+par RadioSch.user[7].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[7].myqq typename "\"MyQ\""
+par RadioSch.user[7] typename "\"User\""
+par RadioSch.user[8].generator typename "\"Source\""
+par RadioSch.user[8].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[8].generator nrPackets 1
+par RadioSch.user[8].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[8].myqq typename "\"MyQ\""
+par RadioSch.user[8] typename "\"User\""
+par RadioSch.user[9].generator typename "\"Source\""
+par RadioSch.user[9].generator sendIaTime 0.37ms
+attr unit ms
+par RadioSch.user[9].generator nrPackets 1
+par RadioSch.user[9].generator MAX_SIM 500s
+attr unit s
+par RadioSch.user[9].myqq typename "\"MyQ\""
+par RadioSch.user[9] typename "\"User\""
+par RadioSch.flc typename "\"FLC\""
+par RadioSch.flc config "<FLC>...</FLC> at D:/Faculta/omnettpac/RadioTpac/\\conf.xml:2"
+par RadioSch.gen typename "\"GeneratorFLC\""
+par RadioSch typename "\"RadioSch\""
+par RadioSch highPriorityUsersCount 2
+par RadioSch highPriorityWeight 4
+par RadioSch mediumPriorityUsersCount 5
+par RadioSch mediumPriorityWeight 2
+par RadioSch lowPriorityUsersCount 3
+par RadioSch lowPriorityWeight 1
+par RadioSch usersCount 10
+par RadioSch NrOfChannels 10
+par RadioSch schedulingPeriod 1ms
+attr unit ms
+par RadioSch delayLimit 1
+

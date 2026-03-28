@@ -1,0 +1,57 @@
+file 181410 1774721631                                          
+version 3
+run General-0-20260328-20:13:47-2872
+attr configname General
+attr datetime 20260328-20:13:47
+attr datetimef 20260328-201347
+attr experiment General
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsd ""
+attr iterationvarsf ""
+attr measurement ""
+attr network RadioSch
+attr processid 2872
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+config network RadioSch
+config record-eventlog true
+config result-dir results
+config output-vector-file results/General-0.vec
+config output-scalar-file results/General-0.sca
+config **.vector-recording true
+config **.scalar-recording true
+config RadioSch.usersCount 10
+config *.scheduler.NrOfHighPriorityUsers 2
+config *.scheduler.NrOfMediumPriorityUsers 5
+config *.scheduler.NrOfLowPriorityUsers 3
+config *.scheduler.NrOfChannels 30
+config *.scheduler.HighPriorityWeight 4
+config *.scheduler.MediumPriorityWeight 2
+config *.scheduler.LowPriorityWeight 1
+config *.delayLimit 1
+config *.flc.config "xmldoc(\"conf2.xml\")"
+config **.generator.sendIaTime 0.37ms
+config **.generator.nrPackets 1
+config **.generator.MAX_SIM 500s
+config *.scheduler.schedulingPeriod 1ms
+config sim-time-limit 500s
+
+vector 0 RadioSch.sink "high priority mean delay" ETV
+vector 1 RadioSch.sink "medium priority mean delay" ETV
+vector 2 RadioSch.sink "low priority mean delay" ETV
+vector 3 RadioSch.flc "delay vector" ETV
+vector 4 RadioSch.flc "result nescalat" ETV
+vector 5 RadioSch.flc "res scalat" ETV
+vector 6 RadioSch.flc "weight vector" ETV
+0	1574 76195 125 52839 1 500 2658 0.000474100221 1.097007199556 1359.5156254618 765.32500836252
+1	77769 54274 135 52847 1 500 1907 1 183.37175167157 176703.29207748 21667841.744857
+2	132043 12379 238 52742 2 499 435 2 222.40122812364 48627.18030493 7209532.8832716
+3	144422 14194 321 52833 3 500 498 0.2996673588903 0.884204097853 252.16802492185 131.79464246651
+4	158616 7765 321 52833 3 500 498 32 32 15936 509952
+5	166381 7267 321 52833 3 500 498 1 1 498 498
+6	173648 7760 321 52833 3 500 498 5 31 14851 448621
+

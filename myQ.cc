@@ -84,32 +84,44 @@ void MyQ::handleMessage(cMessage *msg)
 {
     if (msg->arrivedOn("rxPackets")) {
         queue.insert(msg);
+        cMessage *qInfo = new cMessage("qInfo");
+        qInfo->addPar("ql_info");
+        qInfo->par("ql_info").setLongValue(queue.getLength());
+        send(qInfo, "txInfo");
         return;
     }
 
     if (msg->arrivedOn("rxScheduling")) {
+        int nrOfBlocks = 0;
+        int priority = 0; // default
 
-        // 1) Scheduler asks for queue length
-        if (msg->getKind() == KIND_QREQ) {
-            cMessage *rsp = new cMessage("qlenRsp");
-            rsp->setKind(KIND_QRSP);
-            rsp->addPar("qlen") = queue.getLength();
-            send(rsp, "txStatus");
-            delete msg;
-            return;
+        if (msg->hasPar("nrOfBlocks")) {
+            nrOfBlocks = (int)msg->par("nrOfBlocks");
+        }
+        else if (msg->hasPar("nrBlocks")) {
+            nrOfBlocks = (int)msg->par("nrBlocks");
+        }
+        if (msg->hasPar("priorityType")) {
+            priority = (int)msg->par("priorityType");
         }
 
-        // 2) Scheduler grants nrOfBlocks to be transmitted
-        int nrOfBlocks = 0;
-        if (msg->hasPar("nrOfBlocks"))
-            nrOfBlocks = (int)msg->par("nrOfBlocks");
+        EV << "[MyQ] grant=" << nrOfBlocks << " priority=" << priority << " queue=" << queue.getLength() << "\n";
 
         delete msg;
 
         for (int j = 0; j < nrOfBlocks && !queue.isEmpty(); ++j) {
             cMessage *pkt = (cMessage *)queue.pop();
+            pkt->addPar("priority");
+            pkt->par("priority").setLongValue(priority);
             send(pkt, "txPackets");
         }
+
+        // SEND queue length info on each scheduling decision
+        cMessage *qInfo = new cMessage("qInfo");
+        qInfo->addPar("ql_info");
+        qInfo->par("ql_info").setLongValue(queue.getLength());
+        send(qInfo, "txInfo"); // ADDED: out to scheduler
+
         return;
     }
 

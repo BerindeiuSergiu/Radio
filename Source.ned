@@ -22,6 +22,8 @@ simple Source
 {
      parameters:
          double sendIaTime @unit(ms) = default(10 ms);
+         int nrPackets = default(1);
+         double MAX_SIM @unit(s) = default(100s);
         //volatile double generatorPeriod @unit(ms) = default(100ms);
       //  @display("i=block/source");
     gates:
